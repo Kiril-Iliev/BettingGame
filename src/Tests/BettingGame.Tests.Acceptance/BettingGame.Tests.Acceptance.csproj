@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\BettingGame.ConsoleApp\BettingGame.ConsoleApp.csproj" />
+  </ItemGroup>
+</Project>
