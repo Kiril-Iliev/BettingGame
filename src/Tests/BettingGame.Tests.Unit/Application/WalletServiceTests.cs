@@ -77,9 +77,22 @@ public class WalletServiceTests
         var act = () => _service.PlaceBetAsync(_player, Amount.Of(5), CancellationToken.None);
 
         await act.Should().ThrowAsync<BalanceChangedElsewhereException>();
+        _player.Balance.Should().Be(10);
         _players.StoredBalance(Username).Should().Be(3);
         _players.Bets.Should().BeEmpty();
         _players.Transactions.Should().ContainSingle().Which.Type.Should().Be(TransactionType.Deposit);
+    }
+
+    [Test]
+    public async Task DepositAsync_BalanceChangedElsewhere_KeepsPlayerBalanceUnchanged()
+    {
+        _players.ChangeBalanceElsewhere(Username, 3);
+
+        var act = () => _service.DepositAsync(_player, Amount.Of(5), CancellationToken.None);
+
+        await act.Should().ThrowAsync<BalanceChangedElsewhereException>();
+        _player.Balance.Should().Be(0);
+        _players.Transactions.Should().BeEmpty();
     }
 
     [Test]

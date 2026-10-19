@@ -25,6 +25,23 @@ public class WalletTests
     }
 
     [Test]
+    public void DefaultAmount_IsRejectedByEveryOperation()
+    {
+        _wallet.Deposit(Amount.Of(10));
+
+        var actions = new Action[]
+        {
+            () => _wallet.Deposit(default),
+            () => _wallet.Withdraw(default),
+            () => _wallet.SettleBet(default, 5),
+            () => _wallet.EnsureSufficientFunds(default),
+        };
+
+        actions.Should().AllSatisfy(act => act.Should().Throw<InvalidAmountException>().WithMessage("Amount must be a positive number."));
+        _wallet.Balance.Should().Be(10);
+    }
+
+    [Test]
     public void Withdraw_DecreasesBalance()
     {
         _wallet.Deposit(Amount.Of(44.15m));

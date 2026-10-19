@@ -15,7 +15,7 @@ public sealed class Wallet
 
     public decimal Balance { get; private set; }
 
-    public void Deposit(Amount amount) => Balance = Credit(Balance, amount.Value);
+    public void Deposit(Amount amount) => Balance = Credit(Balance, Positive(amount));
 
     public void Withdraw(Amount amount)
     {
@@ -32,11 +32,14 @@ public sealed class Wallet
 
     public void EnsureSufficientFunds(Amount amount)
     {
-        if (amount.Value > Balance)
+        if (Positive(amount) > Balance)
         {
             throw new InsufficientFundsException();
         }
     }
+
+    private static decimal Positive(Amount amount) =>
+        amount.Value > 0 ? amount.Value : throw new InvalidAmountException(DomainErrorMessages.AmountNotPositive);
 
     private static decimal Credit(decimal balance, decimal amount) =>
         amount > MaxBalance - balance ? throw new BalanceLimitExceededException() : balance + amount;

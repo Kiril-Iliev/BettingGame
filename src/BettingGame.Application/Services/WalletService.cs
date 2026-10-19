@@ -19,12 +19,12 @@ public sealed class WalletService(IGame game, IPlayerRepository players, TimePro
     public async Task<BetResult> PlaceBetAsync(Player player, Amount bet, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(player);
-        var wallet = player.Wallet;
+        var balanceBefore = player.Balance;
+        var wallet = new Wallet(balanceBefore);
 
         game.ValidateBet(bet);
         wallet.EnsureSufficientFunds(bet);
 
-        var balanceBefore = wallet.Balance;
         var spin = game.Play(bet);
         wallet.SettleBet(bet, spin.Win);
 
@@ -45,6 +45,7 @@ public sealed class WalletService(IGame game, IPlayerRepository players, TimePro
             transactions,
             cancellationToken);
 
+        player.UpdateWallet(wallet);
         return new BetResult(spin.Win, wallet.Balance);
     }
 
@@ -57,15 +58,17 @@ public sealed class WalletService(IGame game, IPlayerRepository players, TimePro
     {
         ArgumentNullException.ThrowIfNull(player);
 
-        var balanceBefore = player.Wallet.Balance;
-        apply(player.Wallet);
+        var balanceBefore = player.Balance;
+        var wallet = new Wallet(balanceBefore);
+        apply(wallet);
 
         await players.SaveTransactionAsync(
             balanceBefore,
-            new TransactionEntry(player.Id, type, amount, player.Wallet.Balance, BetId: null, UtcNow()),
+            new TransactionEntry(player.Id, type, amount, wallet.Balance, BetId: null, UtcNow()),
             cancellationToken);
 
-        return new TransactionResult(amount, player.Wallet.Balance);
+        player.UpdateWallet(wallet);
+        return new TransactionResult(amount, wallet.Balance);
     }
 
     private DateTime UtcNow() => clock.GetUtcNow().UtcDateTime;
